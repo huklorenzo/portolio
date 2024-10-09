@@ -1,38 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
+import { getList, addItem, updateItem, deleteItem } from './services/service';
 
 function App() {
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    return savedTasks ? JSON.parse(savedTasks) : [];
-  });
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    getList().then(data => {
+      setTasks(data);
+    }).catch(error => {
+      console.error(error);
+    })
+  }, []);
 
   // Add a new task
   const addTask = (text) => {
     const newTask = {
       id: tasks.length + 1,
-      text: text,
-      isCompleted: false
+      title: text,
+      completed: false
     };
-    setTasks([...tasks, newTask]);
+
+    addItem(newTask).then(data => {
+      setTasks([...tasks, data]);
+    }).catch(error => {
+      console.error(error);
+    });
   };
 
   // Toggle task completion
   const toggleTask = (id) => {
     const updatedTasks = tasks.map(task =>
-      task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
+      task.id === id ? { ...task, completed: !task.completed } : task
     );
-    setTasks(updatedTasks);
+    const taskToUpdate = updatedTasks.find(task => task.id === id);
+
+    updateItem(taskToUpdate).then(data => {
+      setTasks(tasks.map(task => task.id === id ? data : task));
+    }).catch(error => {
+      console.error(error);
+    });
   };
 
   // Delete a task
   const deleteTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
+    deleteItem(id).then(data => {
+      setTasks(tasks.filter(task => task.id !== id));
+    }).catch(error => {
+      console.error(error);
+    });
+    
   };
 
   return (
